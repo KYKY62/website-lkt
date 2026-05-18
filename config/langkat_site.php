@@ -1,0 +1,53 @@
+<?php
+
+return [
+    'identity' => [
+        'name' => 'Pemerintah Kabupaten Langkat',
+        'short_name' => 'Langkat',
+        'tagline' => 'Portal informasi, layanan, dan komunikasi publik Kabupaten Langkat.',
+        'address' => 'Jl. T. Amir Hamzah No. 1, Stabat 20811, Sumatera Utara',
+        'phone' => '(061) 8910202',
+        'email' => 'sekretariat@langkatkab.go.id',
+        'office_hours' => 'Senin - Jumat, 08.00 - 16.30 WIB',
+    ],
+    'navigation' => [
+        ['label' => 'Beranda', 'path' => '/'],
+        ['label' => 'Profil', 'path' => '/profil'],
+        ['label' => 'Berita', 'path' => '/berita'],
+        ['label' => 'Pengumuman', 'path' => '/pengumuman'],
+        ['label' => 'Layanan', 'path' => '/layanan'],
+        ['label' => 'Galeri', 'path' => '/galeri'],
+        ['label' => 'Download', 'path' => '/download'],
+        ['label' => 'Kontak', 'path' => '/kontak'],
+    ],
+    'widget_embed_allowed_domains' => [
+        'www.youtube.com',
+        'youtube.com',
+        'youtu.be',
+        'www.google.com',
+        'maps.google.com',
+        'www.google.co.id',
+    ],
+    'hero' => [
+        'eyebrow' => 'Website Resmi Pemerintah Kabupaten Langkat',
+        'title' => 'Portal Kabupaten Langkat',
+        'description' => 'Pusat informasi resmi Pemerintah Kabupaten Langkat untuk berita, layanan, pengumuman, dokumen publik, dan kanal komunikasi masyarakat.',
+        'primary_cta' => ['label' => 'Lihat Berita Terkini', 'path' => '/berita'],
+        'secondary_cta' => ['label' => 'Akses Layanan', 'path' => '/layanan'],
+        'search_placeholder' => 'Cari berita, layanan, pengumuman, atau dokumen',
+        'slides' => [],
+    ],
+    'profile' => [
+        'overview' => [],
+        'vision' => null,
+        'missions' => [],
+        'highlights' => [],
+    ],
+    'services' => [],
+    'service_apps' => [],
+    'news' => [],
+    'announcements' => [],
+    'downloads' => [],
+    'gallery' => [],
+    'related_links' => [],
+];

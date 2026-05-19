@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { siteData } from './siteData';
+import AnnouncementDetailPage from './pages/AnnouncementDetailPage.vue';
 import AnnouncementsPage from './pages/AnnouncementsPage.vue';
 import ContactPage from './pages/ContactPage.vue';
 import DownloadsPage from './pages/DownloadsPage.vue';
@@ -17,6 +18,7 @@ const routes = [
     { path: '/berita', component: NewsPage, meta: { title: 'Berita' } },
     { path: '/berita/:slug', component: NewsDetailPage, meta: { title: 'Detail Berita' } },
     { path: '/pengumuman', component: AnnouncementsPage, meta: { title: 'Pengumuman' } },
+    { path: '/pengumuman/:slug', component: AnnouncementDetailPage, meta: { title: 'Detail Pengumuman' } },
     { path: '/layanan', component: ServicesPage, meta: { title: 'Layanan' } },
     { path: '/galeri', component: GalleryPage, meta: { title: 'Galeri' } },
     { path: '/download', component: DownloadsPage, meta: { title: 'Download' } },

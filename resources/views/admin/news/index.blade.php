@@ -50,7 +50,7 @@
                                             {{ $article->status }}
                                         </span>
                                     </td>
-                                    <td>{{ $article->publishedBy?->name ?? '-' }}</td>
+                                    <td>{{ $article->publishedBy?->name ?? $article->legacy_author ?? '-' }}</td>
                                     <td>{{ $article->published_at?->format('d M Y H:i') ?? '-' }}</td>
                                     <td>
                                         <div class="button-row">

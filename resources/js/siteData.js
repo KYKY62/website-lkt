@@ -18,6 +18,10 @@ export function findNewsBySlug(slug) {
     return newsItems.find((item) => item.slug === slug);
 }
 
+export function findAnnouncementBySlug(slug) {
+    return announcementItems.find((item) => item.slug === slug);
+}
+
 export function findStaticPageByPath(path) {
     return staticPages.find((item) => item.path === path);
 }

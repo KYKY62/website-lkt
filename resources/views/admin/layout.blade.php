@@ -25,6 +25,8 @@
 
                     <div class="admin-topbar__links">
                         <a href="{{ route('admin.news.index') }}" class="admin-link {{ request()->routeIs('admin.news.*') ? 'is-active' : '' }}">Manajemen Berita</a>
+                        <a href="{{ route('admin.announcements.index') }}" class="admin-link {{ request()->routeIs('admin.announcements.*') ? 'is-active' : '' }}">Pengumuman</a>
+                        <a href="{{ route('admin.downloads.index') }}" class="admin-link {{ request()->routeIs('admin.downloads.*') ? 'is-active' : '' }}">Download</a>
                         <a href="{{ route('admin.services.index') }}" class="admin-link {{ request()->routeIs('admin.services.*') ? 'is-active' : '' }}">Layanan</a>
                         <a href="{{ route('admin.widgets.index') }}" class="admin-link {{ request()->routeIs('admin.widgets.*') ? 'is-active' : '' }}">Widget Halaman</a>
                         @if (auth()->user()->isSuperAdmin())

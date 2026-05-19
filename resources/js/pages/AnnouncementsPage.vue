@@ -1,4 +1,5 @@
 <script setup>
+import { RouterLink } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
 import { announcementItems } from '../siteData';
 </script>
@@ -16,12 +17,15 @@ import { announcementItems } from '../siteData';
             </article>
 
             <div v-if="announcementItems.length" class="grid gap-5">
-                <article v-for="item in announcementItems" :key="item.title" class="feature-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <article v-for="item in announcementItems" :key="item.slug" class="feature-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p class="content-meta">{{ item.date }}</p>
+                        <p class="content-meta">{{ item.category }} | {{ item.date }}</p>
                         <h2 class="content-title">{{ item.title }}</h2>
                     </div>
-                    <span class="chip chip-light">{{ item.type }}</span>
+                    <div class="button-row">
+                        <RouterLink :to="`/pengumuman/${item.slug}`" class="button button--primary">Detail</RouterLink>
+                        <a v-if="item.file_url" :href="item.file_url" class="button button--secondary">Unduh</a>
+                    </div>
                 </article>
             </div>
 

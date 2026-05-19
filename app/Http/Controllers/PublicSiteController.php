@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\NewsArticle;
+use App\Models\Announcement;
+use App\Models\DownloadDocument;
 use App\Models\PageWidget;
 use App\Models\ServiceShortcut;
 use App\Models\SiteMenu;
@@ -20,6 +22,8 @@ class PublicSiteController extends Controller
         $siteData['navigation'] = $this->publicNavigation();
         $siteData['pages'] = $this->publicPages();
         $siteData['news'] = $this->publicNews();
+        $siteData['announcements'] = $this->publicAnnouncements();
+        $siteData['downloads'] = $this->publicDownloads();
         $siteData['services'] = $this->publicServices();
         $siteData['service_apps'] = $siteData['services'];
         $siteData['hero_widgets'] = $this->publicHeroWidgets();
@@ -53,10 +57,41 @@ class PublicSiteController extends Controller
                     'summary' => $article->excerpt,
                     'cover_image_url' => $article->coverImage(),
                     'gallery_images' => $article->galleryImages(),
-                    'editor_name' => $article->publishedBy?->name,
+                    'editor_name' => $article->publishedBy?->name ?: $article->legacy_author,
                     'content_html' => $this->resolveContentHtml($article->content),
                 ];
             })
+            ->values()
+            ->all();
+    }
+
+    private function publicAnnouncements(): array
+    {
+        if (! Schema::hasTable('announcements')) {
+            return [];
+        }
+
+        return Announcement::query()
+            ->with('publishedBy')
+            ->published()
+            ->orderByDesc('published_at')
+            ->get()
+            ->map(fn (Announcement $announcement): array => $announcement->publicPayload())
+            ->values()
+            ->all();
+    }
+
+    private function publicDownloads(): array
+    {
+        if (! Schema::hasTable('download_documents')) {
+            return [];
+        }
+
+        return DownloadDocument::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->get()
+            ->map(fn (DownloadDocument $download): array => $download->publicPayload())
             ->values()
             ->all();
     }

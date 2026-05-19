@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AdminAccountController;
+use App\Http\Controllers\AdminAnnouncementController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminDownloadDocumentController;
 use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminNewsController;
 use App\Http\Controllers\AdminPageWidgetController;
@@ -9,6 +11,8 @@ use App\Http\Controllers\AdminServiceShortcutController;
 use App\Http\Controllers\AdminStaticPageController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\LegacyRedirectController;
+use App\Http\Controllers\PublicContentFileController;
 use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +48,14 @@ Route::middleware('auth')
             Route::resource('services', AdminServiceShortcutController::class)
                 ->except(['show'])
                 ->parameters(['services' => 'service']);
+
+            Route::resource('announcements', AdminAnnouncementController::class)
+                ->except(['show'])
+                ->parameters(['announcements' => 'announcement']);
+
+            Route::resource('downloads', AdminDownloadDocumentController::class)
+                ->except(['show'])
+                ->parameters(['downloads' => 'download']);
         });
 
         Route::middleware('role:super_admin')->group(function (): void {
@@ -64,6 +76,25 @@ Route::middleware('auth')
 
 Route::post('/api/contact-messages', [ContactMessageController::class, 'store'])
     ->name('contact-messages.store');
+
+Route::get('/berita/{legacyId}/{legacySlug?}', [LegacyRedirectController::class, 'news'])
+    ->whereNumber('legacyId')
+    ->name('legacy.news');
+Route::get('/pengumuman/detil/{legacyId}/{legacySlug?}', [LegacyRedirectController::class, 'announcement'])
+    ->whereNumber('legacyId')
+    ->name('legacy.announcements.show');
+Route::get('/pengumuman/get/{legacyId}/{anything?}', [LegacyRedirectController::class, 'announcementFile'])
+    ->whereNumber('legacyId')
+    ->where('anything', '.*')
+    ->name('legacy.announcements.file');
+Route::get('/download/get/{legacyId}/{anything?}', [LegacyRedirectController::class, 'downloadFile'])
+    ->whereNumber('legacyId')
+    ->where('anything', '.*')
+    ->name('legacy.downloads.file');
+Route::get('/pengumuman/file/{announcement:slug}', [PublicContentFileController::class, 'announcementFile'])
+    ->name('announcements.file');
+Route::get('/download/file/{download:slug}', [PublicContentFileController::class, 'downloadFile'])
+    ->name('downloads.file');
 
 Route::get('/{any?}', PublicSiteController::class)
     ->where('any', '.*')

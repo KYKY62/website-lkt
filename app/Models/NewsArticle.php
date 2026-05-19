@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 class NewsArticle extends Model
 {
     protected $fillable = [
+        'legacy_id',
         'title',
         'slug',
         'category',
@@ -20,11 +21,13 @@ class NewsArticle extends Model
         'status',
         'published_at',
         'published_by',
+        'legacy_author',
     ];
 
     protected function casts(): array
     {
         return [
+            'legacy_id' => 'integer',
             'image_urls' => 'array',
             'published_at' => 'datetime',
         ];

@@ -59,6 +59,8 @@ ADMIN_SEED_PASSWORD="ganti-dengan-password-kuat"
 ## Panel admin
 
 - Modul manajemen berita tersedia di `http://localhost:8000/admin/news`.
+- Modul pengumuman tersedia di `http://localhost:8000/admin/announcements`.
+- Modul download/dokumen tersedia di `http://localhost:8000/admin/downloads`.
 - Modul layanan tersedia di `http://localhost:8000/admin/services`.
 - Login admin tersedia di `http://localhost:8000/admin/login`.
 - Halaman akun admin tersedia di `http://localhost:8000/admin/account`.
@@ -109,3 +111,40 @@ php artisan test
 - Berita publik sekarang dapat dibaca dari database dan dikelola lewat panel admin.
 - Widget pre-footer hanya tampil pada halaman yang memiliki widget berstatus `published`.
 - Konten publik awal tidak disediakan di konfigurasi atau seeder; halaman tanpa data menampilkan empty state produksi.
+
+## Migrasi konten website lama
+
+Migrasi konten legacy memakai command idempotent, sehingga aman dijalankan ulang karena data dicocokkan berdasarkan `legacy_id`.
+
+Tambahkan konfigurasi berikut di `.env` lokal/server produksi. Jangan commit password database lama ke repository:
+
+```env
+LEGACY_DB_CONNECTION=legacy
+LEGACY_DB_HOST=192.168.4.22
+LEGACY_DB_PORT=3306
+LEGACY_DB_DATABASE=langkat_baru
+LEGACY_DB_USERNAME=langkat_baru
+LEGACY_DB_PASSWORD=
+LEGACY_BASE_URL=https://www.langkatkab.go.id
+```
+
+Jalankan dry-run untuk memastikan jumlah target:
+
+```powershell
+php artisan legacy:migrate-content --only=news,announcements,downloads --dry-run
+```
+
+Jalankan import aktual setelah database baru sudah dimigrasikan dan `php artisan storage:link` sudah dibuat:
+
+```powershell
+php artisan legacy:migrate-content --only=news,announcements,downloads
+```
+
+Konten yang dimigrasikan hanya data published/non-trash: berita, pengumuman, dan download. File lama disalin ke `storage/app/public/legacy/...`, bukan hotlink, dan URL legacy berikut disiapkan sebagai redirect/handler:
+
+```text
+/berita/{legacy_id}/{legacy_slug?}
+/pengumuman/detil/{legacy_id}/{legacy_slug?}
+/pengumuman/get/{legacy_id}/{anything?}
+/download/get/{legacy_id}/{anything?}
+```

@@ -13,6 +13,10 @@ function isExternal(path) {
     return /^https?:\/\//.test(path);
 }
 
+function shouldUseAnchor(item) {
+    return isExternal(item.path) || item.target === '_blank';
+}
+
 function isActive(path, children = []) {
     if (isExternal(path)) {
         return false;
@@ -52,16 +56,29 @@ function toggleSubmenu(index) {
                     v-for="(item, index) in mainNavigation"
                     :key="`${item.label}-${item.path}`"
                     class="site-header__item"
-                    @mouseleave="openSubmenu = null"
                 >
                     <div class="site-header__nav-group">
+                        <button
+                            v-if="item.children?.length"
+                            type="button"
+                            class="site-header__link site-header__link--dropdown"
+                            :class="{ 'is-active': isActive(item.path, item.children ?? []) || openSubmenu === index }"
+                            :aria-expanded="openSubmenu === index ? 'true' : 'false'"
+                            :aria-label="`${openSubmenu === index ? 'Tutup' : 'Buka'} submenu ${item.label}`"
+                            aria-haspopup="true"
+                            @click="toggleSubmenu(index)"
+                        >
+                            <span>{{ item.label }}</span>
+                            <span class="site-header__submenu-icon" aria-hidden="true"></span>
+                        </button>
                         <a
-                            v-if="isExternal(item.path)"
+                            v-else-if="shouldUseAnchor(item)"
                             :href="item.path"
                             :target="item.target ?? '_self'"
                             rel="noreferrer"
                             class="site-header__link"
                             :class="{ 'is-active': isActive(item.path, item.children ?? []) }"
+                            @click="openSubmenu = null"
                         >
                             {{ item.label }}
                         </a>
@@ -70,33 +87,23 @@ function toggleSubmenu(index) {
                             :to="item.path"
                             class="site-header__link"
                             :class="{ 'is-active': isActive(item.path, item.children ?? []) }"
+                            @click="openSubmenu = null"
                         >
                             {{ item.label }}
                         </RouterLink>
-
-                        <button
-                            v-if="item.children?.length"
-                            type="button"
-                            class="site-header__submenu-trigger"
-                            :class="{ 'is-active': isActive(item.path, item.children ?? []) || openSubmenu === index }"
-                            :aria-expanded="openSubmenu === index ? 'true' : 'false'"
-                            aria-haspopup="true"
-                            @click="toggleSubmenu(index)"
-                        >
-                            Submenu
-                        </button>
                     </div>
 
-                    <div v-if="item.children?.length" class="site-header__submenu" :style="{ display: openSubmenu === index ? 'block' : null }">
+                    <div v-if="item.children?.length && openSubmenu === index" class="site-header__submenu">
                         <div class="site-header__submenu-panel">
                             <template v-for="child in item.children" :key="`${item.label}-${child.label}-${child.path}`">
                                 <a
-                                    v-if="isExternal(child.path)"
+                                    v-if="shouldUseAnchor(child)"
                                     :href="child.path"
                                     :target="child.target ?? '_self'"
                                     rel="noreferrer"
                                     class="site-header__submenu-link"
                                     :class="{ 'is-active': isActive(child.path) }"
+                                    @click="openSubmenu = null"
                                 >
                                     {{ child.label }}
                                 </a>
@@ -105,6 +112,7 @@ function toggleSubmenu(index) {
                                     :to="child.path"
                                     class="site-header__submenu-link"
                                     :class="{ 'is-active': isActive(child.path) }"
+                                    @click="openSubmenu = null"
                                 >
                                     {{ child.label }}
                                 </RouterLink>
@@ -133,8 +141,16 @@ function toggleSubmenu(index) {
                     :key="`mobile-${item.label}-${item.path}`"
                     class="site-header__mobile-group"
                 >
+                    <div
+                        v-if="item.children?.length"
+                        class="site-header__mobile-link site-header__mobile-link--group"
+                        :class="{ 'is-active': isActive(item.path, item.children ?? []) }"
+                    >
+                        <span>{{ item.label }}</span>
+                        <span class="site-header__submenu-icon" aria-hidden="true"></span>
+                    </div>
                     <a
-                        v-if="isExternal(item.path)"
+                        v-else-if="shouldUseAnchor(item)"
                         :href="item.path"
                         :target="item.target ?? '_self'"
                         rel="noreferrer"
@@ -157,7 +173,7 @@ function toggleSubmenu(index) {
                     <div v-if="item.children?.length" class="site-header__mobile-submenu">
                         <template v-for="child in item.children" :key="`mobile-${item.label}-${child.label}-${child.path}`">
                             <a
-                                v-if="isExternal(child.path)"
+                                v-if="shouldUseAnchor(child)"
                                 :href="child.path"
                                 :target="child.target ?? '_self'"
                                 rel="noreferrer"

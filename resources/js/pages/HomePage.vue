@@ -2,11 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
-import { announcementItems, downloadItems, heroWidgets, newsItems, serviceApps, siteData } from '../siteData';
+import { announcementItems, departmentNews, downloadItems, heroWidgets, newsItems, serviceApps, siteData } from '../siteData';
 
 const router = useRouter();
 const currentSlide = ref(0);
 const keyword = ref('');
+const failedDepartmentImages = ref(new Set());
 
 const slides = computed(() => siteData.hero?.slides ?? []);
 const heroHeadline = computed(() => slides.value[currentSlide.value]?.title ?? siteData.hero.description);
@@ -89,6 +90,27 @@ function serviceInitials(service) {
 
 function isInternalService(service) {
     return service.link_url?.startsWith('/') && service.link_target !== '_blank';
+}
+
+function departmentItemKey(item) {
+    return `${item.source}-${item.slug}`;
+}
+
+function hasDepartmentImage(item) {
+    return item.image_url && !failedDepartmentImages.value.has(departmentItemKey(item));
+}
+
+function markDepartmentImageFailed(item) {
+    const nextFailedImages = new Set(failedDepartmentImages.value);
+    nextFailedImages.add(departmentItemKey(item));
+    failedDepartmentImages.value = nextFailedImages;
+}
+
+function departmentSourceLabel(source) {
+    return String(source ?? '')
+        .replace(/-lkt$/i, '')
+        .replace(/-/g, ' ')
+        .toUpperCase();
 }
 
 onMounted(() => {
@@ -294,6 +316,56 @@ onBeforeUnmount(() => {
                     eyebrow="Berita"
                     title="Belum ada berita yang dipublikasikan."
                     description="Berita resmi akan tampil setelah editor mempublikasikan artikel melalui panel admin."
+                />
+            </div>
+        </section>
+
+        <section v-if="departmentNews.enabled" class="section section-muted">
+            <div class="page-container">
+                <div class="section-heading section-heading--row">
+                    <div>
+                        <p class="eyebrow">Kabar OPD</p>
+                        <h2 class="section-title">{{ departmentNews.title }}</h2>
+                        <p v-if="departmentNews.description" class="section-description">{{ departmentNews.description }}</p>
+                    </div>
+                </div>
+
+                <div v-if="departmentNews.items?.length" class="department-news-list mt-6">
+                    <a
+                        v-for="item in departmentNews.items"
+                        :key="departmentItemKey(item)"
+                        :href="item.link_url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="department-news-card"
+                    >
+                        <div class="department-news-card__media">
+                            <img
+                                v-if="hasDepartmentImage(item)"
+                                :src="item.image_url"
+                                :alt="item.title"
+                                class="department-news-card__image"
+                                loading="lazy"
+                                @error="markDepartmentImageFailed(item)"
+                            >
+                            <div v-else class="department-news-card__placeholder">LK</div>
+                        </div>
+                        <div class="department-news-card__content">
+                            <h3 class="department-news-card__title">{{ item.title }}</h3>
+                            <div class="department-news-card__meta">
+                                <span class="department-news-card__source">{{ departmentSourceLabel(item.source) }}</span>
+                                <span class="department-news-card__date">{{ item.date }}</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <PublicEmptyState
+                    v-else
+                    class="mt-6"
+                    eyebrow="Kabar OPD"
+                    title="Kabar perangkat daerah belum tersedia."
+                    description="Data akan tampil otomatis setelah API perangkat daerah dapat diakses atau cache berhasil direfresh."
                 />
             </div>
         </section>

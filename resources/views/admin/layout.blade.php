@@ -28,6 +28,7 @@
                         <a href="{{ route('admin.announcements.index') }}" class="admin-link {{ request()->routeIs('admin.announcements.*') ? 'is-active' : '' }}">Pengumuman</a>
                         <a href="{{ route('admin.downloads.index') }}" class="admin-link {{ request()->routeIs('admin.downloads.*') ? 'is-active' : '' }}">Download</a>
                         <a href="{{ route('admin.services.index') }}" class="admin-link {{ request()->routeIs('admin.services.*') ? 'is-active' : '' }}">Layanan</a>
+                        <a href="{{ route('admin.department-news.edit') }}" class="admin-link {{ request()->routeIs('admin.department-news.*') ? 'is-active' : '' }}">Kabar OPD</a>
                         <a href="{{ route('admin.widgets.index') }}" class="admin-link {{ request()->routeIs('admin.widgets.*') ? 'is-active' : '' }}">Widget Halaman</a>
                         @if (auth()->user()->isSuperAdmin())
                             <a href="{{ route('admin.pages.index') }}" class="admin-link {{ request()->routeIs('admin.pages.*') ? 'is-active' : '' }}">Halaman Statis</a>

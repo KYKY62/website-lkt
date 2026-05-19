@@ -31,7 +31,7 @@ class AdminMenuController extends Controller
         return view('admin.menus.create', $this->formData(new SiteMenu([
             'item_type' => SiteMenu::TYPE_MODULE,
             'target' => '_self',
-            'sort_order' => 1,
+            'sort_order' => ((int) SiteMenu::query()->max('sort_order')) + 1,
             'is_active' => true,
         ])));
     }
@@ -162,10 +162,10 @@ class AdminMenuController extends Controller
             ]);
         }
 
-        $validated['page_id'] = $validated['item_type'] === SiteMenu::TYPE_PAGE ? $validated['page_id'] : null;
+        $validated['page_id'] = $validated['item_type'] === SiteMenu::TYPE_PAGE ? ($validated['page_id'] ?? null) : null;
         $validated['url'] = $validated['item_type'] === SiteMenu::TYPE_LINK ? trim((string) ($validated['url'] ?? '')) : null;
         $validated['target'] = $validated['item_type'] === SiteMenu::TYPE_LINK ? ($validated['target'] ?? '_self') : '_self';
-        $validated['module_key'] = $validated['item_type'] === SiteMenu::TYPE_MODULE ? $validated['module_key'] : null;
+        $validated['module_key'] = $validated['item_type'] === SiteMenu::TYPE_MODULE ? ($validated['module_key'] ?? null) : null;
         $validated['is_active'] = (bool) ($validated['is_active'] ?? false);
 
         unset($validated['menu_position']);

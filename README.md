@@ -62,6 +62,7 @@ ADMIN_SEED_PASSWORD="ganti-dengan-password-kuat"
 - Modul pengumuman tersedia di `http://localhost:8000/admin/announcements`.
 - Modul download/dokumen tersedia di `http://localhost:8000/admin/downloads`.
 - Modul layanan tersedia di `http://localhost:8000/admin/services`.
+- Modul Kabar Perangkat Daerah tersedia di `http://localhost:8000/admin/department-news`.
 - Login admin tersedia di `http://localhost:8000/admin/login`.
 - Halaman akun admin tersedia di `http://localhost:8000/admin/account`.
 - Role yang tersedia saat ini hanya `super_admin` dan `news_editor`.
@@ -72,6 +73,7 @@ ADMIN_SEED_PASSWORD="ganti-dengan-password-kuat"
 - Widget halaman mengatur area dua kolom sebelum footer per target halaman, mendukung `static_image`, `link_banner`, `html`, `embed`, dan `text_cta`.
 - `super_admin` dan `news_editor` dapat mengelola widget halaman.
 - Layanan berisi shortcut aplikasi atau halaman layanan perangkat daerah dengan logo/icon, judul, penyelenggara, deskripsi, link, status, dan urutan.
+- Kabar Perangkat Daerah mengambil berita dari API multisite secara server-side, memakai cache, dan tampil sebagai section di beranda.
 - Menu website mendukung posisi `master` dan `submenu`.
 - Jenis menu yang tersedia saat ini: `page`, `link`, dan `module`.
 - Modul berita sekarang memakai editor WYSIWYG untuk isi artikel.
@@ -127,6 +129,19 @@ LEGACY_DB_USERNAME=langkat_baru
 LEGACY_DB_PASSWORD=
 LEGACY_BASE_URL=https://www.langkatkab.go.id
 ```
+
+## Kabar Perangkat Daerah
+
+Widget beranda ini mengambil berita perangkat daerah dari API multisite dan menyimpan hasil sukses di cache agar halaman tetap stabil bila API sedang lambat atau gagal.
+
+```env
+DEPARTMENT_NEWS_API_URL=https://multisite.langkatkab.go.id/api/v1/all-berita
+DEPARTMENT_NEWS_TIMEOUT=8
+DEPARTMENT_NEWS_RETRY_TIMES=1
+DEPARTMENT_NEWS_RETRY_SLEEP_MS=200
+```
+
+Pengaturan tampilan, jumlah item, durasi cache, refresh cache, dan clear cache tersedia di panel admin.
 
 Jalankan dry-run untuk memastikan jumlah target:
 

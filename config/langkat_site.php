@@ -48,6 +48,12 @@ return [
     'news' => [],
     'announcements' => [],
     'downloads' => [],
+    'department_news' => [
+        'enabled' => false,
+        'title' => 'Kabar Perangkat Daerah',
+        'description' => 'Berita terbaru dari website perangkat daerah dan kecamatan di lingkungan Pemerintah Kabupaten Langkat.',
+        'items' => [],
+    ],
     'gallery' => [],
     'related_links' => [],
 ];

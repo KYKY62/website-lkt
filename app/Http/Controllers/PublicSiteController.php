@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\NewsArticle;
 use App\Models\Announcement;
+use App\Models\DepartmentNewsSetting;
 use App\Models\DownloadDocument;
 use App\Models\PageWidget;
 use App\Models\ServiceShortcut;
 use App\Models\SiteMenu;
 use App\Models\StaticPage;
+use App\Services\DepartmentNewsService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -26,6 +28,7 @@ class PublicSiteController extends Controller
         $siteData['downloads'] = $this->publicDownloads();
         $siteData['services'] = $this->publicServices();
         $siteData['service_apps'] = $siteData['services'];
+        $siteData['department_news'] = $this->publicDepartmentNews();
         $siteData['hero_widgets'] = $this->publicHeroWidgets();
         $siteData['pre_footer_widgets'] = $this->publicPreFooterWidgets();
 
@@ -130,11 +133,25 @@ class PublicSiteController extends Controller
                 ->all();
         }
 
-        return $menus
+        $navigation = $menus
             ->filter(fn (SiteMenu $menu): bool => $this->menuIsVisible($menu))
             ->map(fn (SiteMenu $menu): array => $this->mapMenuItem($menu))
             ->values()
             ->all();
+
+        if ($navigation === []) {
+            return collect(config('langkat_site.navigation', []))
+                ->map(fn (array $item): array => [
+                    'label' => $item['label'],
+                    'path' => $item['path'],
+                    'target' => '_self',
+                    'children' => [],
+                ])
+                ->values()
+                ->all();
+        }
+
+        return $navigation;
     }
 
     private function publicPages(): array
@@ -170,6 +187,31 @@ class PublicSiteController extends Controller
             ->map(fn (ServiceShortcut $service): array => $service->publicPayload())
             ->values()
             ->all();
+    }
+
+    private function publicDepartmentNews(): array
+    {
+        if (! Schema::hasTable('department_news_settings')) {
+            return [
+                'enabled' => false,
+                'title' => DepartmentNewsSetting::defaults()['title'],
+                'description' => DepartmentNewsSetting::defaults()['description'],
+                'items' => [],
+            ];
+        }
+
+        $setting = DepartmentNewsSetting::query()->first();
+
+        if (! $setting) {
+            return [
+                'enabled' => false,
+                'title' => DepartmentNewsSetting::defaults()['title'],
+                'description' => DepartmentNewsSetting::defaults()['description'],
+                'items' => [],
+            ];
+        }
+
+        return app(DepartmentNewsService::class)->publicPayload($setting);
     }
 
     private function publicPreFooterWidgets(): array

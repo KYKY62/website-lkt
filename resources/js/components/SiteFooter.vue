@@ -5,6 +5,10 @@ import { brandLogoUrl, mainNavigation, siteData } from '../siteData';
 function isExternal(path) {
     return /^https?:\/\//.test(path);
 }
+
+function shouldUseAnchor(item) {
+    return isExternal(item.path) || item.target === '_blank';
+}
 </script>
 
 <template>
@@ -24,7 +28,7 @@ function isExternal(path) {
                 <div class="site-footer__links">
                     <template v-for="item in mainNavigation" :key="item.path">
                         <a
-                            v-if="isExternal(item.path)"
+                            v-if="shouldUseAnchor(item)"
                             :href="item.path"
                             :target="item.target ?? '_self'"
                             rel="noreferrer"

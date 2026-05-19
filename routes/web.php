@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminAccountController;
 use App\Http\Controllers\AdminAnnouncementController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminDepartmentNewsController;
 use App\Http\Controllers\AdminDownloadDocumentController;
 use App\Http\Controllers\AdminMenuController;
 use App\Http\Controllers\AdminNewsController;
@@ -56,6 +57,11 @@ Route::middleware('auth')
             Route::resource('downloads', AdminDownloadDocumentController::class)
                 ->except(['show'])
                 ->parameters(['downloads' => 'download']);
+
+            Route::get('department-news', [AdminDepartmentNewsController::class, 'edit'])->name('department-news.edit');
+            Route::put('department-news', [AdminDepartmentNewsController::class, 'update'])->name('department-news.update');
+            Route::post('department-news/refresh', [AdminDepartmentNewsController::class, 'refresh'])->name('department-news.refresh');
+            Route::post('department-news/clear', [AdminDepartmentNewsController::class, 'clear'])->name('department-news.clear');
         });
 
         Route::middleware('role:super_admin')->group(function (): void {

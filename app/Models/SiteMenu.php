@@ -44,12 +44,14 @@ class SiteMenu extends Model
     public static function moduleOptions(): array
     {
         return [
+            ['key' => 'home', 'label' => 'Beranda', 'path' => '/'],
+            ['key' => 'profile', 'label' => 'Profil', 'path' => '/profil'],
             ['key' => 'news', 'label' => 'Berita', 'path' => '/berita'],
-            ['key' => 'downloads', 'label' => 'Download', 'path' => '/download'],
             ['key' => 'announcements', 'label' => 'Pengumuman', 'path' => '/pengumuman'],
-            ['key' => 'gallery', 'label' => 'Galeri', 'path' => '/galeri'],
-            ['key' => 'contact', 'label' => 'Kontak', 'path' => '/kontak'],
             ['key' => 'services', 'label' => 'Layanan', 'path' => '/layanan'],
+            ['key' => 'gallery', 'label' => 'Galeri', 'path' => '/galeri'],
+            ['key' => 'downloads', 'label' => 'Download', 'path' => '/download'],
+            ['key' => 'contact', 'label' => 'Kontak', 'path' => '/kontak'],
         ];
     }
 

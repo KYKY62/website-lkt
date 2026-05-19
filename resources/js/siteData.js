@@ -11,6 +11,7 @@ export const serviceItems = siteData.services ?? [];
 export const serviceApps = siteData.service_apps ?? [];
 export const galleryItems = siteData.gallery ?? [];
 export const downloadItems = siteData.downloads ?? [];
+export const departmentNews = siteData.department_news ?? { enabled: false, title: '', description: '', items: [] };
 export const heroWidgets = siteData.hero_widgets ?? [];
 export const preFooterWidgets = siteData.pre_footer_widgets ?? {};
 

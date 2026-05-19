@@ -65,7 +65,7 @@ class AdminContentStructureTest extends TestCase
                 'is_active' => '1',
             ]);
 
-        $masterMenu = SiteMenu::query()->where('label', 'Profil')->firstOrFail();
+        $masterMenu = SiteMenu::query()->where('label', 'Profil')->latest('id')->firstOrFail();
         $masterResponse->assertRedirect(route('admin.menus.edit', $masterMenu));
 
         $submenuResponse = $this
@@ -136,6 +136,33 @@ class AdminContentStructureTest extends TestCase
             ->assertSee('Isi halaman statis publik.')
             ->assertSee('Informasi')
             ->assertSee('Berita');
+    }
+
+    public function test_default_site_menus_are_seeded_for_admin_management(): void
+    {
+        $this->assertDatabaseHas('site_menus', [
+            'label' => 'Beranda',
+            'item_type' => SiteMenu::TYPE_MODULE,
+            'module_key' => 'home',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->assertDatabaseHas('site_menus', [
+            'label' => 'Profil',
+            'item_type' => SiteMenu::TYPE_MODULE,
+            'module_key' => 'profile',
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $this->assertDatabaseHas('site_menus', [
+            'label' => 'Kontak',
+            'item_type' => SiteMenu::TYPE_MODULE,
+            'module_key' => 'contact',
+            'sort_order' => 8,
+            'is_active' => true,
+        ]);
     }
 
     public function test_super_admin_can_reorder_master_menu_and_submenu(): void

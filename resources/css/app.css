@@ -171,6 +171,14 @@ img {
     line-height: 1.8;
 }
 
+.section-description {
+    margin: 0;
+    max-width: 46rem;
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
 .section-link {
     color: var(--blue-700);
     font-size: 0.9rem;
@@ -503,19 +511,12 @@ img {
     position: relative;
 }
 
-.site-header__item:hover .site-header__submenu,
-.site-header__item:focus-within .site-header__submenu {
-    display: block;
-}
-
 .site-header__nav-group {
     display: flex;
     align-items: center;
-    gap: 0.15rem;
 }
 
 .site-header__link,
-.site-header__submenu-trigger,
 .site-header__mobile-link,
 .site-header__mobile-sublink {
     border-radius: 999px;
@@ -523,23 +524,34 @@ img {
     transition: 180ms ease;
 }
 
-.site-header__link,
-.site-header__submenu-trigger {
+.site-header__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    border: 0;
+    background: transparent;
     padding: 0.58rem 0.82rem;
     font-size: 0.88rem;
     font-weight: 600;
-}
-
-.site-header__submenu-trigger {
-    border: 0;
-    background: transparent;
     cursor: pointer;
 }
 
+.site-header__submenu-icon {
+    display: inline-block;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-0.12rem) rotate(45deg);
+    transition: transform 180ms ease;
+}
+
+.site-header__link--dropdown.is-active .site-header__submenu-icon {
+    transform: translateY(0.12rem) rotate(225deg);
+}
+
 .site-header__link:hover,
-.site-header__link.is-active,
-.site-header__submenu-trigger:hover,
-.site-header__submenu-trigger.is-active {
+.site-header__link.is-active {
     background: rgba(13, 92, 171, 0.08);
     color: var(--blue-700);
 }
@@ -548,7 +560,7 @@ img {
     position: absolute;
     top: calc(100% + 0.4rem);
     left: 0;
-    display: none;
+    z-index: 30;
     min-width: 15rem;
 }
 
@@ -621,6 +633,13 @@ img {
     border-color: var(--border-strong);
     background: rgba(13, 92, 171, 0.08);
     color: var(--blue-700);
+}
+
+.site-header__mobile-link--group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
 }
 
 .site-header__mobile-submenu {
@@ -955,6 +974,97 @@ img {
     display: block;
     border-radius: var(--radius-lg);
     padding: 1rem 1.05rem;
+}
+
+.department-news-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.department-news-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    padding: 0.7rem;
+    box-shadow: var(--shadow-sm);
+    transition: 180ms ease;
+}
+
+.department-news-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.department-news-card__media {
+    position: relative;
+    width: 5.65rem;
+    min-width: 5.65rem;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+}
+
+.department-news-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.department-news-card__placeholder {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(13, 92, 171, 0.12), rgba(228, 191, 71, 0.22));
+    color: var(--blue-700);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.department-news-card__content {
+    min-width: 0;
+}
+
+.department-news-card__title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--blue-900);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.department-news-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    margin-top: 0.45rem;
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+}
+
+.department-news-card__source {
+    border-radius: var(--radius-xs);
+    background: rgba(7, 123, 86, 0.1);
+    padding: 0.2rem 0.4rem;
+    color: #067a58;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.department-news-card__date {
+    font-weight: 700;
 }
 
 .list-card__copy,

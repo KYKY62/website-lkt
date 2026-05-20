@@ -113,7 +113,7 @@ function compactSummary(text, limit = 250) {
         return value;
     }
 
-    return `${value.slice(0, limit).trimEnd()}...`;
+    return `${value.slice(0, Math.max(0, limit - 3)).trimEnd()}...`;
 }
 
 function newsInitials(item) {

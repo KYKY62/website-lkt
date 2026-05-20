@@ -1,17 +1,44 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
-import { newsItems } from '../siteData';
 
 const batchSize = 10;
-const visibleNewsCount = ref(batchSize);
+const newsItems = ref([]);
+const nextPage = ref(1);
+const hasMoreNews = ref(true);
+const isLoading = ref(false);
+const loadError = ref('');
 
-const visibleNewsItems = computed(() => newsItems.slice(0, visibleNewsCount.value));
-const hasMoreNews = computed(() => visibleNewsCount.value < newsItems.length);
+async function loadMoreNews() {
+    if (isLoading.value || !hasMoreNews.value) {
+        return;
+    }
 
-function loadMoreNews() {
-    visibleNewsCount.value = Math.min(visibleNewsCount.value + batchSize, newsItems.length);
+    isLoading.value = true;
+    loadError.value = '';
+
+    try {
+        const response = await fetch(`/api/news?page=${nextPage.value}&per_page=${batchSize}`, {
+            headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) {
+            throw new Error('Gagal memuat berita.');
+        }
+
+        const payload = await response.json();
+        const existingSlugs = new Set(newsItems.value.map((item) => item.slug));
+        const freshItems = (payload.data ?? []).filter((item) => !existingSlugs.has(item.slug));
+
+        newsItems.value = [...newsItems.value, ...freshItems];
+        hasMoreNews.value = Boolean(payload.meta?.has_more);
+        nextPage.value = payload.meta?.next_page ?? nextPage.value + 1;
+    } catch (error) {
+        loadError.value = error instanceof Error ? error.message : 'Gagal memuat berita.';
+    } finally {
+        isLoading.value = false;
+    }
 }
 
 function handleScroll() {
@@ -38,7 +65,7 @@ function newsInitials(item) {
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    loadMoreNews();
 });
 
 onBeforeUnmount(() => {
@@ -61,7 +88,7 @@ onBeforeUnmount(() => {
 
             <div v-if="newsItems.length" class="news-directory">
                 <RouterLink
-                    v-for="item in visibleNewsItems"
+                    v-for="item in newsItems"
                     :key="item.slug"
                     :to="`/berita/${item.slug}`"
                     class="feature-card feature-card--hover news-directory-card"
@@ -83,14 +110,25 @@ onBeforeUnmount(() => {
                 </RouterLink>
             </div>
 
-            <div v-if="hasMoreNews" class="news-load-more">
+            <div v-if="isLoading" class="news-load-more">
+                <span class="content-meta">Memuat berita...</span>
+            </div>
+
+            <div v-else-if="loadError" class="feature-card mt-6">
+                <p class="content-summary">{{ loadError }}</p>
+                <button type="button" class="button button--secondary mt-4" @click="loadMoreNews">
+                    Coba lagi
+                </button>
+            </div>
+
+            <div v-else-if="hasMoreNews" class="news-load-more">
                 <button type="button" class="button button--secondary" @click="loadMoreNews">
                     Muat 10 berita lagi
                 </button>
             </div>
 
             <PublicEmptyState
-                v-else
+                v-else-if="!newsItems.length"
                 eyebrow="Berita"
                 title="Belum ada berita yang dipublikasikan."
                 description="Silakan kembali lagi setelah artikel resmi tersedia."

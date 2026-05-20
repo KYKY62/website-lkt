@@ -12,6 +12,7 @@ use App\Models\SiteMenu;
 use App\Models\StaticPage;
 use App\Services\DepartmentNewsService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -38,34 +39,94 @@ class PublicSiteController extends Controller
         ]);
     }
 
+    public function newsIndex(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('news_articles')) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'next_page' => null,
+                    'has_more' => false,
+                    'per_page' => 10,
+                    'total' => 0,
+                ],
+            ]);
+        }
+
+        $perPage = min(max($request->integer('per_page', 10), 1), 10);
+        $page = max($request->integer('page', 1), 1);
+        $paginator = $this->newsQuery()
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => $paginator
+                ->getCollection()
+                ->map(fn (NewsArticle $article): array => $this->newsSummaryPayload($article))
+                ->values(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'next_page' => $paginator->hasMorePages() ? $paginator->currentPage() + 1 : null,
+                'has_more' => $paginator->hasMorePages(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
+    }
+
+    public function newsShow(string $slug): JsonResponse
+    {
+        abort_unless(Schema::hasTable('news_articles'), 404);
+
+        $article = $this->newsQuery()
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        return response()->json($this->newsDetailPayload($article));
+    }
+
     private function publicNews(): array
     {
         if (! Schema::hasTable('news_articles')) {
             return [];
         }
 
-        $articles = NewsArticle::query()
-            ->with('publishedBy')
-            ->published()
-            ->orderByDesc('published_at')
-            ->get();
-
-        return $articles
-            ->map(function (NewsArticle $article): array {
-                return [
-                    'slug' => $article->slug,
-                    'title' => $article->title,
-                    'category' => $article->category,
-                    'date' => $article->published_at?->locale('id')->translatedFormat('d F Y'),
-                    'summary' => $this->compactText($article->excerpt, 250),
-                    'cover_image_url' => $article->coverImage(),
-                    'gallery_images' => $article->galleryImages(),
-                    'editor_name' => $article->publishedBy?->name ?: $article->legacy_author,
-                    'content_html' => $this->resolveContentHtml($article->content),
-                ];
-            })
+        return $this->newsQuery()
+            ->limit(9)
+            ->get()
+            ->map(fn (NewsArticle $article): array => $this->newsSummaryPayload($article))
             ->values()
             ->all();
+    }
+
+    private function newsQuery()
+    {
+        return NewsArticle::query()
+            ->with('publishedBy')
+            ->published()
+            ->orderByDesc('published_at');
+    }
+
+    private function newsSummaryPayload(NewsArticle $article): array
+    {
+        return [
+            'slug' => $article->slug,
+            'title' => $article->title,
+            'category' => $article->category,
+            'date' => $article->published_at?->locale('id')->translatedFormat('d F Y'),
+            'summary' => $this->compactText($article->excerpt, 250),
+            'cover_image_url' => $article->coverImage(),
+            'editor_name' => $article->publishedBy?->name ?: $article->legacy_author,
+        ];
+    }
+
+    private function newsDetailPayload(NewsArticle $article): array
+    {
+        return [
+            ...$this->newsSummaryPayload($article),
+            'gallery_images' => $article->galleryImages(),
+            'content_html' => $this->resolveContentHtml($article->content),
+        ];
     }
 
     private function compactText(?string $text, int $limit = 250): string

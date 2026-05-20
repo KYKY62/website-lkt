@@ -82,6 +82,11 @@ Route::middleware('auth')
 
 Route::post('/api/contact-messages', [ContactMessageController::class, 'store'])
     ->name('contact-messages.store');
+Route::get('/api/news', [PublicSiteController::class, 'newsIndex'])
+    ->name('public.news.index');
+Route::get('/api/news/{slug}', [PublicSiteController::class, 'newsShow'])
+    ->where('slug', '[A-Za-z0-9\\-]+')
+    ->name('public.news.show');
 
 Route::get('/berita/{legacyId}/{legacySlug?}', [LegacyRedirectController::class, 'news'])
     ->whereNumber('legacyId')

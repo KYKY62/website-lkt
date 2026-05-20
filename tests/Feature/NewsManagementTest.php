@@ -159,6 +159,62 @@ class NewsManagementTest extends TestCase
             ->assertDontSee('Berita Draft');
     }
 
+    public function test_public_news_api_paginates_list_and_serves_detail_payload(): void
+    {
+        $editor = User::factory()->create([
+            'name' => 'Editor API',
+        ]);
+
+        foreach (range(1, 12) as $index) {
+            NewsArticle::query()->create([
+                'title' => "Berita API {$index}",
+                'slug' => "berita-api-{$index}",
+                'category' => 'Informasi Publik',
+                'excerpt' => "Ringkasan berita {$index}",
+                'content' => "<p>Konten berita {$index}</p>",
+                'status' => 'published',
+                'published_at' => now()->subMinutes($index),
+                'published_by' => $editor->id,
+            ]);
+        }
+
+        $homeResponse = $this->get('/');
+        preg_match('/window\.__SITE_DATA__ = (.*?);\s*window\.Laravel/s', $homeResponse->getContent(), $matches);
+        $siteData = json_decode($matches[1], true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertCount(9, $siteData['news']);
+        $this->assertArrayNotHasKey('content_html', $siteData['news'][0]);
+
+        $firstPage = $this->getJson('/api/news?per_page=10');
+
+        $firstPage
+            ->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.has_more', true)
+            ->assertJsonPath('meta.next_page', 2);
+
+        $firstPageData = $firstPage->json('data');
+        $this->assertSame('berita-api-1', $firstPageData[0]['slug']);
+        $this->assertArrayNotHasKey('content_html', $firstPageData[0]);
+
+        $secondPage = $this->getJson('/api/news?page=2&per_page=10');
+
+        $secondPage
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.has_more', false);
+
+        $detail = $this->getJson('/api/news/berita-api-1');
+
+        $detail
+            ->assertOk()
+            ->assertJsonPath('slug', 'berita-api-1')
+            ->assertJsonPath('editor_name', 'Editor API');
+
+        $this->assertArrayHasKey('content_html', $detail->json());
+        $this->assertArrayHasKey('gallery_images', $detail->json());
+    }
+
     public function test_admin_can_reorder_existing_uploaded_images(): void
     {
         Storage::fake('public');

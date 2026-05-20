@@ -1,11 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { findNewsBySlug } from '../siteData';
 
 const route = useRoute();
-const article = computed(() => findNewsBySlug(route.params.slug));
+const article = ref(null);
 const activeImage = ref(null);
+const isLoading = ref(false);
+const notFound = ref(false);
 
 function openImage(imageUrl) {
     activeImage.value = imageUrl;
@@ -14,6 +16,46 @@ function openImage(imageUrl) {
 function closeImage() {
     activeImage.value = null;
 }
+
+async function loadArticle(slug) {
+    const cachedArticle = findNewsBySlug(slug);
+
+    article.value = cachedArticle?.content_html ? cachedArticle : null;
+    notFound.value = false;
+    isLoading.value = true;
+
+    try {
+        const response = await fetch(`/api/news/${encodeURIComponent(slug)}`, {
+            headers: { Accept: 'application/json' },
+        });
+
+        if (response.status === 404) {
+            notFound.value = true;
+            article.value = null;
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error('Gagal memuat detail berita.');
+        }
+
+        article.value = await response.json();
+    } catch (error) {
+        if (cachedArticle) {
+            article.value = cachedArticle;
+        } else {
+            notFound.value = true;
+        }
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+watch(
+    () => route.params.slug,
+    (slug) => loadArticle(String(slug ?? '')),
+    { immediate: true }
+);
 </script>
 
 <template>
@@ -21,7 +63,11 @@ function closeImage() {
         <div class="page-container" style="max-width: 64rem;">
             <RouterLink to="/berita" class="button-secondary">Kembali ke berita</RouterLink>
 
-            <article v-if="article" class="rich-surface mt-8">
+            <article v-if="isLoading" class="feature-card mt-8">
+                <p class="content-meta">Memuat detail berita...</p>
+            </article>
+
+            <article v-else-if="article" class="rich-surface mt-8">
                 <div class="detail-shell">
                     <div>
                         <p class="content-meta">{{ article.category }} | {{ article.date }}</p>
@@ -58,7 +104,7 @@ function closeImage() {
                 </div>
             </article>
 
-            <article v-else class="feature-card mt-8">
+            <article v-else-if="notFound" class="feature-card mt-8">
                 <h1 class="section-title">Berita tidak ditemukan.</h1>
                 <p class="mt-4 text-sm leading-7 text-slate-600">Artikel belum tersedia atau belum dipublikasikan.</p>
             </article>

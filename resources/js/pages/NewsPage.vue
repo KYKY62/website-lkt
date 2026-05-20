@@ -2,6 +2,16 @@
 import { RouterLink } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
 import { newsItems } from '../siteData';
+
+function newsInitials(item) {
+    return String(item.title ?? 'LK')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join('')
+        .toUpperCase();
+}
 </script>
 
 <template>
@@ -17,16 +27,27 @@ import { newsItems } from '../siteData';
                 </div>
             </article>
 
-            <div v-if="newsItems.length" class="grid gap-5 lg:grid-cols-2">
+            <div v-if="newsItems.length" class="news-directory">
                 <RouterLink
                     v-for="item in newsItems"
                     :key="item.slug"
                     :to="`/berita/${item.slug}`"
-                    class="feature-card feature-card--hover block"
+                    class="feature-card feature-card--hover news-directory-card"
                 >
-                    <p class="content-meta">{{ item.category }} | {{ item.date }}</p>
-                    <h2 class="content-title">{{ item.title }}</h2>
-                    <p class="content-summary">{{ item.summary }}</p>
+                    <div class="news-directory-card__media">
+                        <img
+                            v-if="item.cover_image_url"
+                            :src="item.cover_image_url"
+                            :alt="item.title"
+                            loading="lazy"
+                        >
+                        <div v-else class="news-thumb__placeholder">{{ newsInitials(item) }}</div>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="content-meta">{{ item.category }} | {{ item.date }}</p>
+                        <h2 class="content-title">{{ item.title }}</h2>
+                        <p class="content-summary">{{ item.summary }}</p>
+                    </div>
                 </RouterLink>
             </div>
 

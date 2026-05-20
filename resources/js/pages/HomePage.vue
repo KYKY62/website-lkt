@@ -106,6 +106,26 @@ function markDepartmentImageFailed(item) {
     failedDepartmentImages.value = nextFailedImages;
 }
 
+function compactSummary(text, limit = 250) {
+    const value = String(text ?? '').replace(/\s+/g, ' ').trim();
+
+    if (value.length <= limit) {
+        return value;
+    }
+
+    return `${value.slice(0, limit).trimEnd()}...`;
+}
+
+function newsInitials(item) {
+    return String(item.title ?? 'LK')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join('')
+        .toUpperCase();
+}
+
 function departmentSourceLabel(source) {
     return String(source ?? '')
         .replace(/-lkt$/i, '')
@@ -274,38 +294,54 @@ onBeforeUnmount(() => {
                     <RouterLink to="/berita" class="section-link">Lihat semua berita</RouterLink>
                 </div>
 
-                <div v-if="newsItems.length" class="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                <div v-if="newsItems.length" class="home-news-grid mt-4">
                     <RouterLink
                         v-if="newsItems[0]"
                         :to="`/berita/${newsItems[0].slug}`"
                         class="news-feature"
                     >
-                        <div
-                            class="news-feature__image"
-                            :style="newsItems[0].cover_image_url
-                                ? { backgroundImage: `linear-gradient(135deg, rgba(10, 75, 139, 0.86), rgba(13, 92, 171, 0.7)), url('${newsItems[0].cover_image_url}')` }
-                                : { backgroundImage: 'linear-gradient(135deg, #0a4b8c, #083767 58%, #e4bf47)' }"
-                        ></div>
+                        <div class="news-feature__image">
+                            <img
+                                v-if="newsItems[0].cover_image_url"
+                                :src="newsItems[0].cover_image_url"
+                                :alt="newsItems[0].title"
+                                loading="lazy"
+                            >
+                            <div v-else class="news-thumb__placeholder news-thumb__placeholder--feature">
+                                {{ newsInitials(newsItems[0]) }}
+                            </div>
+                        </div>
                         <div class="news-feature__content">
                             <div class="news-feature__meta">
                                 <span>{{ newsItems[0].category }}</span>
                                 <span>{{ newsItems[0].date }}</span>
                             </div>
                             <h3 class="news-feature__title">{{ newsItems[0].title }}</h3>
-                            <p class="news-feature__summary">{{ newsItems[0].summary }}</p>
+                            <p class="news-feature__summary">{{ compactSummary(newsItems[0].summary) }}</p>
                         </div>
                     </RouterLink>
 
-                    <div class="grid gap-3">
+                    <div class="home-news-list">
                         <RouterLink
-                            v-for="item in newsItems.slice(1, 4)"
+                            v-for="item in newsItems.slice(1, 7)"
                             :key="item.slug"
                             :to="`/berita/${item.slug}`"
                             class="list-card"
                         >
-                            <p class="list-card__meta">{{ item.category }} | {{ item.date }}</p>
-                            <h3 class="list-card__title">{{ item.title }}</h3>
-                            <p class="list-card__copy">{{ item.summary }}</p>
+                            <div class="news-thumb">
+                                <img
+                                    v-if="item.cover_image_url"
+                                    :src="item.cover_image_url"
+                                    :alt="item.title"
+                                    loading="lazy"
+                                >
+                                <div v-else class="news-thumb__placeholder">{{ newsInitials(item) }}</div>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="list-card__meta">{{ item.category }} | {{ item.date }}</p>
+                                <h3 class="list-card__title">{{ item.title }}</h3>
+                                <p class="list-card__copy">{{ compactSummary(item.summary) }}</p>
+                            </div>
                         </RouterLink>
                     </div>
                 </div>
@@ -320,53 +356,108 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <section v-if="departmentNews.enabled" class="section section-muted">
+        <section class="section section-muted">
             <div class="page-container">
-                <div class="section-heading section-heading--row">
-                    <div>
-                        <p class="eyebrow">Kabar OPD</p>
-                        <h2 class="section-title">{{ departmentNews.title }}</h2>
-                        <p v-if="departmentNews.description" class="section-description">{{ departmentNews.description }}</p>
-                    </div>
-                </div>
-
-                <div v-if="departmentNews.items?.length" class="department-news-list mt-6">
-                    <a
-                        v-for="item in departmentNews.items"
-                        :key="departmentItemKey(item)"
-                        :href="item.link_url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="department-news-card"
-                    >
-                        <div class="department-news-card__media">
-                            <img
-                                v-if="hasDepartmentImage(item)"
-                                :src="item.image_url"
-                                :alt="item.title"
-                                class="department-news-card__image"
-                                loading="lazy"
-                                @error="markDepartmentImageFailed(item)"
-                            >
-                            <div v-else class="department-news-card__placeholder">LK</div>
-                        </div>
-                        <div class="department-news-card__content">
-                            <h3 class="department-news-card__title">{{ item.title }}</h3>
-                            <div class="department-news-card__meta">
-                                <span class="department-news-card__source">{{ departmentSourceLabel(item.source) }}</span>
-                                <span class="department-news-card__date">{{ item.date }}</span>
+                <div class="home-quick-panels" :class="{ 'home-quick-panels--two': !departmentNews.enabled }">
+                    <div v-if="departmentNews.enabled" class="panel-card panel-card--compact home-opd-panel">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="eyebrow">Kabar OPD</p>
+                                <h2 class="section-title section-title--small">{{ departmentNews.title }}</h2>
                             </div>
                         </div>
-                    </a>
-                </div>
 
-                <PublicEmptyState
-                    v-else
-                    class="mt-6"
-                    eyebrow="Kabar OPD"
-                    title="Kabar perangkat daerah belum tersedia."
-                    description="Data akan tampil otomatis setelah API perangkat daerah dapat diakses atau cache berhasil direfresh."
-                />
+                        <div v-if="departmentNews.items?.length" class="department-news-list mt-4">
+                            <a
+                                v-for="item in departmentNews.items.slice(0, 5)"
+                                :key="departmentItemKey(item)"
+                                :href="item.link_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="department-news-card"
+                            >
+                                <div class="department-news-card__media">
+                                    <img
+                                        v-if="hasDepartmentImage(item)"
+                                        :src="item.image_url"
+                                        :alt="item.title"
+                                        class="department-news-card__image"
+                                        loading="lazy"
+                                        @error="markDepartmentImageFailed(item)"
+                                    >
+                                    <div v-else class="department-news-card__placeholder">LK</div>
+                                </div>
+                                <div class="department-news-card__content">
+                                    <h3 class="department-news-card__title">{{ item.title }}</h3>
+                                    <div class="department-news-card__meta">
+                                        <span class="department-news-card__source">{{ departmentSourceLabel(item.source) }}</span>
+                                        <span class="department-news-card__date">{{ item.date }}</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <PublicEmptyState
+                            v-else
+                            class="mt-4"
+                            eyebrow="Kabar OPD"
+                            title="Kabar perangkat daerah belum tersedia."
+                            description="Data akan tampil otomatis setelah API perangkat daerah dapat diakses."
+                        />
+                    </div>
+
+                    <div class="panel-card panel-card--compact">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="eyebrow">Pengumuman</p>
+                                <h2 class="section-title section-title--small">Informasi resmi yang perlu segera diketahui</h2>
+                            </div>
+                            <RouterLink to="/pengumuman" class="section-link">Lihat pengumuman</RouterLink>
+                        </div>
+                        <div v-if="announcementItems.length" class="compact-list mt-4">
+                            <article v-for="item in announcementItems.slice(0, 4)" :key="item.title" class="compact-row">
+                                <div class="compact-row__icon">PG</div>
+                                <div class="min-w-0">
+                                    <p class="compact-row__meta">{{ item.date }} | {{ item.type }}</p>
+                                    <h3 class="compact-row__title">{{ item.title }}</h3>
+                                </div>
+                            </article>
+                        </div>
+                        <PublicEmptyState
+                            v-else
+                            class="mt-4"
+                            eyebrow="Pengumuman"
+                            title="Belum ada pengumuman aktif."
+                            description="Pengumuman resmi akan tampil setelah dipublikasikan."
+                        />
+                    </div>
+
+                    <div class="panel-card panel-card--compact">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="eyebrow">Download</p>
+                                <h2 class="section-title section-title--small">Dokumen dan file publik yang sering diakses</h2>
+                            </div>
+                            <RouterLink to="/download" class="section-link">Semua dokumen</RouterLink>
+                        </div>
+                        <div v-if="downloadItems.length" class="compact-list mt-4">
+                            <article v-for="item in downloadItems.slice(0, 4)" :key="item.title" class="compact-row">
+                                <div class="compact-row__icon compact-row__icon--yellow">{{ item.format }}</div>
+                                <div class="min-w-0">
+                                    <p class="compact-row__meta">{{ item.category }}</p>
+                                    <h3 class="compact-row__title">{{ item.title }}</h3>
+                                </div>
+                            </article>
+                        </div>
+                        <PublicEmptyState
+                            v-else
+                            class="mt-4"
+                            eyebrow="Download"
+                            title="Belum ada dokumen publik."
+                            description="Dokumen resmi akan tampil setelah tersedia untuk diunduh."
+                        />
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -380,7 +471,7 @@ onBeforeUnmount(() => {
                     <RouterLink to="/layanan" class="section-link">Semua layanan</RouterLink>
                 </div>
 
-                <div v-if="serviceApps.length" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div v-if="serviceApps.length" class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <template v-for="item in serviceApps" :key="item.id">
                         <RouterLink
                             v-if="isInternalService(item)"
@@ -415,69 +506,11 @@ onBeforeUnmount(() => {
 
                 <PublicEmptyState
                     v-else
-                    class="mt-6"
+                    class="mt-5"
                     eyebrow="Layanan"
                     title="Daftar layanan belum tersedia."
                     description="Kanal layanan dan aplikasi pemerintah akan tampil setelah data resmi ditambahkan."
                 />
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="page-container">
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <div class="panel-card">
-                        <div class="section-heading section-heading--compact">
-                            <div>
-                                <p class="eyebrow">Pengumuman</p>
-                                <h2 class="section-title section-title--small">Informasi resmi yang perlu segera diketahui</h2>
-                            </div>
-                            <RouterLink to="/pengumuman" class="section-link">Lihat pengumuman</RouterLink>
-                        </div>
-                        <div v-if="announcementItems.length" class="mt-5 grid gap-3">
-                            <article v-for="item in announcementItems.slice(0, 4)" :key="item.title" class="compact-row">
-                                <div class="compact-row__icon">PG</div>
-                                <div class="min-w-0">
-                                    <p class="compact-row__meta">{{ item.date }} | {{ item.type }}</p>
-                                    <h3 class="compact-row__title">{{ item.title }}</h3>
-                                </div>
-                            </article>
-                        </div>
-                        <PublicEmptyState
-                            v-else
-                            class="mt-5"
-                            eyebrow="Pengumuman"
-                            title="Belum ada pengumuman aktif."
-                            description="Pengumuman resmi akan tampil setelah dipublikasikan."
-                        />
-                    </div>
-
-                    <div class="panel-card">
-                        <div class="section-heading section-heading--compact">
-                            <div>
-                                <p class="eyebrow">Download</p>
-                                <h2 class="section-title section-title--small">Dokumen dan file publik yang sering diakses</h2>
-                            </div>
-                            <RouterLink to="/download" class="section-link">Semua dokumen</RouterLink>
-                        </div>
-                        <div v-if="downloadItems.length" class="mt-5 grid gap-3">
-                            <article v-for="item in downloadItems.slice(0, 4)" :key="item.title" class="compact-row">
-                                <div class="compact-row__icon compact-row__icon--yellow">{{ item.format }}</div>
-                                <div class="min-w-0">
-                                    <p class="compact-row__meta">{{ item.category }}</p>
-                                    <h3 class="compact-row__title">{{ item.title }}</h3>
-                                </div>
-                            </article>
-                        </div>
-                        <PublicEmptyState
-                            v-else
-                            class="mt-5"
-                            eyebrow="Download"
-                            title="Belum ada dokumen publik."
-                            description="Dokumen resmi akan tampil setelah tersedia untuk diunduh."
-                        />
-                    </div>
-                </div>
             </div>
         </section>
 

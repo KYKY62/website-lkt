@@ -57,7 +57,7 @@ class PublicSiteController extends Controller
                     'title' => $article->title,
                     'category' => $article->category,
                     'date' => $article->published_at?->locale('id')->translatedFormat('d F Y'),
-                    'summary' => $article->excerpt,
+                    'summary' => Str::limit($article->excerpt, 250, '...'),
                     'cover_image_url' => $article->coverImage(),
                     'gallery_images' => $article->galleryImages(),
                     'editor_name' => $article->publishedBy?->name ?: $article->legacy_author,

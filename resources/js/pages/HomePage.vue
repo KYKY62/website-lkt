@@ -11,8 +11,9 @@ const keyword = ref('');
 const failedDepartmentImages = ref(new Set());
 
 const slides = computed(() => siteData.hero?.slides ?? []);
-const heroHeadline = computed(() => slides.value[currentSlide.value]?.title ?? siteData.hero.description);
-const heroTagline = computed(() => slides.value[currentSlide.value]?.tagline ?? siteData.hero.description);
+const activeHeroSlide = computed(() => slides.value[currentSlide.value] ?? null);
+const heroHeadline = computed(() => activeHeroSlide.value?.title ?? '');
+const heroTagline = computed(() => activeHeroSlide.value?.tagline ?? siteData.hero.description);
 
 const searchableItems = computed(() => [
     ...newsItems.map((item) => ({
@@ -173,8 +174,8 @@ onBeforeUnmount(() => {
                         <h1 class="hero-slider__title">
                             <span class="hero-slider__title-accent">{{ siteData.hero.title }}</span>
                         </h1>
-                        <p class="hero-slider__headline">{{ heroHeadline }}</p>
-                        <p class="hero-slider__tagline">{{ heroTagline }}</p>
+                        <p v-if="heroHeadline" class="hero-slider__headline">{{ heroHeadline }}</p>
+                        <p v-if="heroTagline" class="hero-slider__tagline">{{ heroTagline }}</p>
 
                         <form class="hero-search" @submit.prevent="submitSearch">
                             <label for="portal-search" class="sr-only">Cari berita, layanan, pengumuman, atau dokumen</label>

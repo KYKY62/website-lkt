@@ -739,11 +739,12 @@ img {
 
 .hero-slider__title {
     margin: 0;
-    max-width: 13ch;
+    max-width: none;
     font-family: var(--font-heading);
     font-size: clamp(2.25rem, 4vw, 3.25rem);
     line-height: 1.06;
     color: #fff;
+    white-space: nowrap;
 }
 
 .hero-slider__title-accent {
@@ -2556,7 +2557,7 @@ tbody tr:hover {
 
     .hero-slider__title {
         max-width: none;
-        font-size: 2.25rem;
+        font-size: clamp(1.85rem, 9vw, 2.25rem);
     }
 
     .news-directory-card {

@@ -107,6 +107,68 @@ class LegacyContentMigrationTest extends TestCase
         Storage::disk('public')->assertExists($download->file_path);
     }
 
+    public function test_legacy_migration_bounds_long_news_titles_and_slugs(): void
+    {
+        Storage::fake('public');
+        Http::fake([
+            'https://legacy.test/*' => Http::response('image-content', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $longTitle = str_repeat('Undangan Rapat Koordinasi Pemerintah Kabupaten Langkat ', 12);
+
+        DB::connection('legacy_testing')->table('lkt_berita')->insert([
+            [
+                'id' => 8,
+                'id_cat' => 1,
+                'judul' => $longTitle,
+                'content' => '<p>Isi judul panjang</p>',
+                'img' => '',
+                'terbit' => '2026-05-03 10:00:00',
+                'created' => '2026-05-03 09:00:00',
+                'trash' => 0,
+                'status_terbit' => 1,
+                'publisher' => 'rizka',
+            ],
+            [
+                'id' => 9,
+                'id_cat' => 1,
+                'judul' => $longTitle,
+                'content' => '<p>Isi judul panjang duplikat</p>',
+                'img' => '',
+                'terbit' => '2026-05-04 10:00:00',
+                'created' => '2026-05-04 09:00:00',
+                'trash' => 0,
+                'status_terbit' => 1,
+                'publisher' => 'rizka',
+            ],
+            [
+                'id' => 11,
+                'id_cat' => 1,
+                'judul' => 'Tanggal Legacy Rusak',
+                'content' => '<p>Isi tanggal rusak</p>',
+                'img' => '',
+                'terbit' => '-0001-11-30 00:00:00',
+                'created' => '2026-05-05 09:00:00',
+                'trash' => 0,
+                'status_terbit' => 1,
+                'publisher' => 'rizka',
+            ],
+        ]);
+
+        $this->artisan('legacy:migrate-content', ['--only' => 'news'])->assertSuccessful();
+
+        $first = NewsArticle::query()->where('legacy_id', 8)->firstOrFail();
+        $duplicate = NewsArticle::query()->where('legacy_id', 9)->firstOrFail();
+
+        $this->assertLessThanOrEqual(500, mb_strlen($first->title));
+        $this->assertLessThanOrEqual(220, strlen($first->slug));
+        $this->assertLessThanOrEqual(220, strlen($duplicate->slug));
+        $this->assertStringEndsWith('-9', $duplicate->slug);
+
+        $dateFallback = NewsArticle::query()->where('legacy_id', 11)->firstOrFail();
+        $this->assertSame('2026-05-05 09:00:00', $dateFallback->published_at->format('Y-m-d H:i:s'));
+    }
+
     public function test_legacy_redirects_resolve_to_new_content_and_files(): void
     {
         Storage::fake('public');

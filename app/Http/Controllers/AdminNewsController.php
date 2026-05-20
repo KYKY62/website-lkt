@@ -72,11 +72,11 @@ class AdminNewsController extends Controller
     private function validatedPayload(Request $request, ?NewsArticle $article = null): array
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:180'],
+            'title' => ['required', 'string', 'max:500'],
             'slug' => [
                 'nullable',
                 'string',
-                'max:180',
+                'max:220',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('news_articles', 'slug')->ignore($article?->id),
             ],
@@ -171,7 +171,7 @@ class AdminNewsController extends Controller
 
     private function generateUniqueSlug(string $title, ?NewsArticle $article = null): string
     {
-        $baseSlug = Str::slug($title) ?: 'berita';
+        $baseSlug = $this->boundedSlug(Str::slug($title) ?: 'berita');
         $slug = $baseSlug;
         $counter = 2;
 
@@ -181,11 +181,20 @@ class AdminNewsController extends Controller
                 ->where('slug', $slug)
                 ->exists()
         ) {
-            $slug = "{$baseSlug}-{$counter}";
+            $slug = $this->boundedSlug($baseSlug, (string) $counter);
             $counter++;
         }
 
         return $slug;
+    }
+
+    private function boundedSlug(string $base, ?string $suffix = null, int $limit = 220): string
+    {
+        $suffix = trim((string) $suffix, '-');
+        $baseLimit = $suffix === '' ? $limit : max(1, $limit - strlen($suffix) - 1);
+        $base = trim(substr($base, 0, $baseLimit), '-');
+
+        return $suffix === '' ? $base : "{$base}-{$suffix}";
     }
 
     private function resolvePublishedAt(string $status, ?string $publishedAt, ?NewsArticle $article = null): ?Carbon

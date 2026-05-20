@@ -117,7 +117,7 @@ class MigrateLegacyContent extends Command
                     'cover_image_url' => $images[0] ?? null,
                     'image_urls' => $images,
                     'status' => 'published',
-                    'published_at' => $this->dateOrNow($row->terbit ?: $row->created),
+                    'published_at' => $this->dateOrNow($row->terbit, $row->created),
                     'published_by' => $existing?->published_by,
                     'legacy_author' => $this->sanitizer->plain($row->publisher, '', 120) ?: null,
                 ]
@@ -321,21 +321,30 @@ class MigrateLegacyContent extends Command
 
     private function uniqueSlug(?string $title, string $modelClass, ?int $ignoreId, int $legacyId, string $fallback): string
     {
-        $base = Str::slug($title ?: $fallback) ?: $fallback;
+        $base = $this->boundedSlug(Str::slug($title ?: $fallback) ?: $fallback);
         $slug = $base;
 
         if ($this->slugExists($modelClass, $slug, $ignoreId)) {
-            $slug = "{$base}-{$legacyId}";
+            $slug = $this->boundedSlug($base, (string) $legacyId);
         }
 
         $counter = 2;
 
         while ($this->slugExists($modelClass, $slug, $ignoreId)) {
-            $slug = "{$base}-{$legacyId}-{$counter}";
+            $slug = $this->boundedSlug($base, "{$legacyId}-{$counter}");
             $counter++;
         }
 
-        return $slug;
+        return $this->boundedSlug($slug);
+    }
+
+    private function boundedSlug(string $base, ?string $suffix = null, int $limit = 220): string
+    {
+        $suffix = trim((string) $suffix, '-');
+        $baseLimit = $suffix === '' ? $limit : max(1, $limit - strlen($suffix) - 1);
+        $base = trim(substr($base, 0, $baseLimit), '-');
+
+        return $suffix === '' ? $base : "{$base}-{$suffix}";
     }
 
     private function slugExists(string $modelClass, string $slug, ?int $ignoreId): bool
@@ -351,13 +360,27 @@ class MigrateLegacyContent extends Command
         return $this->sanitizer->plain($html, $this->sanitizer->title($fallback, 'Berita'), 500);
     }
 
-    private function dateOrNow(?string $date): Carbon
+    private function dateOrNow(?string $date, ?string $fallback = null): Carbon
     {
-        try {
-            return $date ? Carbon::parse($date) : now();
-        } catch (\Throwable) {
-            return now();
+        foreach ([$date, $fallback] as $candidate) {
+            $candidate = trim((string) $candidate);
+
+            if ($candidate === '') {
+                continue;
+            }
+
+            try {
+                $parsed = Carbon::parse($candidate);
+
+                if ($parsed->year >= 1900) {
+                    return $parsed;
+                }
+            } catch (\Throwable) {
+                continue;
+            }
         }
+
+        return now();
     }
 
     private function legacyUrl(string $path): string

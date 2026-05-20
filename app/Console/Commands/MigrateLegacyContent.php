@@ -9,6 +9,7 @@ use App\Support\ContentSanitizer;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class MigrateLegacyContent extends Command
 {
     protected $signature = 'legacy:migrate-content
         {--only=news,announcements,downloads : Comma-separated content types to migrate}
+        {--from-year= : Only migrate legacy rows published from this year onward}
         {--dry-run : Show target counts without writing data or files}';
 
     protected $description = 'Migrate published legacy Langkat news, announcements, and downloads into the new CMS.';
@@ -35,11 +37,23 @@ class MigrateLegacyContent extends Command
             return self::FAILURE;
         }
 
+        try {
+            $fromDate = $this->fromDateOption();
+        } catch (\InvalidArgumentException $exception) {
+            $this->error($exception->getMessage());
+
+            return self::FAILURE;
+        }
+
         $dryRun = (bool) $this->option('dry-run');
         $legacy = DB::connection(config('legacy.connection', 'legacy'));
 
+        if ($fromDate) {
+            $this->line('Filter tanggal legacy mulai: '.$fromDate->toDateString());
+        }
+
         foreach ($types as $type) {
-            $count = $this->legacyCount($legacy, $type);
+            $count = $this->legacyCount($legacy, $type, $fromDate);
             $this->line("{$type} target: {$count}");
 
             if ($dryRun) {
@@ -47,9 +61,9 @@ class MigrateLegacyContent extends Command
             }
 
             match ($type) {
-                'news' => $this->migrateNews($legacy),
-                'announcements' => $this->migrateAnnouncements($legacy),
-                'downloads' => $this->migrateDownloads($legacy),
+                'news' => $this->migrateNews($legacy, $fromDate),
+                'announcements' => $this->migrateAnnouncements($legacy, $fromDate),
+                'downloads' => $this->migrateDownloads($legacy, $fromDate),
             };
         }
 
@@ -78,22 +92,59 @@ class MigrateLegacyContent extends Command
         return $types;
     }
 
-    private function legacyCount(ConnectionInterface $legacy, string $type): int
+    private function fromDateOption(): ?Carbon
+    {
+        $year = trim((string) $this->option('from-year'));
+
+        if ($year === '') {
+            return null;
+        }
+
+        if (! ctype_digit($year) || (int) $year < 1900 || (int) $year > 2100) {
+            throw new \InvalidArgumentException('Opsi --from-year harus berupa tahun valid, contoh: --from-year=2024');
+        }
+
+        return Carbon::create((int) $year, 1, 1)->startOfDay();
+    }
+
+    private function legacyCount(ConnectionInterface $legacy, string $type, ?Carbon $fromDate): int
     {
         return match ($type) {
-            'news' => (int) $legacy->table('lkt_berita')->where('trash', 0)->where('status_terbit', 1)->count(),
-            'announcements' => (int) $legacy->table('lkt_pengumuman')->where('trash', 0)->where('terbit', 1)->count(),
-            'downloads' => (int) $legacy->table('lkt_download')->where('trash', 0)->where('status', 1)->count(),
+            'news' => (int) $this->applyFromDate(
+                $legacy->table('lkt_berita')->where('trash', 0)->where('status_terbit', 1),
+                'terbit',
+                $fromDate
+            )->count(),
+            'announcements' => (int) $this->applyFromDate(
+                $legacy->table('lkt_pengumuman')->where('trash', 0)->where('terbit', 1),
+                'tanggal',
+                $fromDate
+            )->count(),
+            'downloads' => (int) $this->applyFromDate(
+                $legacy->table('lkt_download')->where('trash', 0)->where('status', 1),
+                'tanggal',
+                $fromDate
+            )->count(),
         };
     }
 
-    private function migrateNews(ConnectionInterface $legacy): void
+    private function applyFromDate(QueryBuilder $query, string $column, ?Carbon $fromDate): QueryBuilder
+    {
+        if ($fromDate) {
+            $query->where($column, '>=', $fromDate->toDateTimeString());
+        }
+
+        return $query;
+    }
+
+    private function migrateNews(ConnectionInterface $legacy, ?Carbon $fromDate): void
     {
         $rows = $legacy->table('lkt_berita as b')
             ->leftJoin('lkt_berita_kategori as c', 'b.id_cat', '=', 'c.id_kat')
             ->select('b.id', 'b.judul', 'b.content', 'b.img', 'b.terbit', 'b.created', 'b.publisher', 'c.nama as category')
             ->where('b.trash', 0)
             ->where('b.status_terbit', 1)
+            ->when($fromDate, fn (QueryBuilder $query): QueryBuilder => $query->where('b.terbit', '>=', $fromDate->toDateTimeString()))
             ->orderBy('b.id')
             ->get();
 
@@ -130,13 +181,14 @@ class MigrateLegacyContent extends Command
         $this->newLine();
     }
 
-    private function migrateAnnouncements(ConnectionInterface $legacy): void
+    private function migrateAnnouncements(ConnectionInterface $legacy, ?Carbon $fromDate): void
     {
         $rows = $legacy->table('lkt_pengumuman as p')
             ->leftJoin('lkt_pengumuman_kategori as c', 'p.id_kat', '=', 'c.id_cat')
             ->select('p.id', 'p.judul', 'p.content', 'p.file', 'p.total_dw', 'p.tanggal', 'p.creator', 'c.nama as category')
             ->where('p.trash', 0)
             ->where('p.terbit', 1)
+            ->when($fromDate, fn (QueryBuilder $query): QueryBuilder => $query->where('p.tanggal', '>=', $fromDate->toDateTimeString()))
             ->orderBy('p.id')
             ->get();
 
@@ -178,13 +230,14 @@ class MigrateLegacyContent extends Command
         $this->newLine();
     }
 
-    private function migrateDownloads(ConnectionInterface $legacy): void
+    private function migrateDownloads(ConnectionInterface $legacy, ?Carbon $fromDate): void
     {
         $rows = $legacy->table('lkt_download as d')
             ->leftJoin('lkt_download_kategori as c', 'd.id_cat', '=', 'c.id_kat')
             ->select('d.id', 'd.judul_file', 'd.nama_file', 'd.tanggal', 'd.deskripsi', 'd.total_dw', 'c.judul as category')
             ->where('d.trash', 0)
             ->where('d.status', 1)
+            ->when($fromDate, fn (QueryBuilder $query): QueryBuilder => $query->where('d.tanggal', '>=', $fromDate->toDateTimeString()))
             ->orderBy('d.id')
             ->get();
 

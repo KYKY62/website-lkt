@@ -1,7 +1,30 @@
 <script setup>
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
 import { newsItems } from '../siteData';
+
+const batchSize = 10;
+const visibleNewsCount = ref(batchSize);
+
+const visibleNewsItems = computed(() => newsItems.slice(0, visibleNewsCount.value));
+const hasMoreNews = computed(() => visibleNewsCount.value < newsItems.length);
+
+function loadMoreNews() {
+    visibleNewsCount.value = Math.min(visibleNewsCount.value + batchSize, newsItems.length);
+}
+
+function handleScroll() {
+    if (!hasMoreNews.value) {
+        return;
+    }
+
+    const scrollBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+
+    if (scrollBottom <= 520) {
+        loadMoreNews();
+    }
+}
 
 function newsInitials(item) {
     return String(item.title ?? 'LK')
@@ -12,6 +35,15 @@ function newsInitials(item) {
         .join('')
         .toUpperCase();
 }
+
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -29,7 +61,7 @@ function newsInitials(item) {
 
             <div v-if="newsItems.length" class="news-directory">
                 <RouterLink
-                    v-for="item in newsItems"
+                    v-for="item in visibleNewsItems"
                     :key="item.slug"
                     :to="`/berita/${item.slug}`"
                     class="feature-card feature-card--hover news-directory-card"
@@ -49,6 +81,12 @@ function newsInitials(item) {
                         <p class="content-summary">{{ item.summary }}</p>
                     </div>
                 </RouterLink>
+            </div>
+
+            <div v-if="hasMoreNews" class="news-load-more">
+                <button type="button" class="button button--secondary" @click="loadMoreNews">
+                    Muat 10 berita lagi
+                </button>
             </div>
 
             <PublicEmptyState

@@ -71,6 +71,54 @@ class LegacyContentMigrationTest extends TestCase
         $this->assertDatabaseCount('download_documents', 0);
     }
 
+    public function test_legacy_migration_can_filter_announcements_and_downloads_from_year(): void
+    {
+        Storage::fake('public');
+        Http::fake([
+            'https://legacy.test/*' => Http::response('%PDF-content', 200, ['Content-Type' => 'application/pdf']),
+        ]);
+
+        DB::connection('legacy_testing')->table('lkt_pengumuman')->insert([
+            'id' => 12,
+            'id_kat' => 1,
+            'judul' => 'Pengumuman 2023',
+            'content' => '<p>Isi lama</p>',
+            'file' => 'pengumuman-2023.pdf',
+            'total_dw' => 1,
+            'terbit' => 1,
+            'trash' => 0,
+            'tanggal' => '2023-12-31 08:00:00',
+            'creator' => 'rizka',
+        ]);
+
+        DB::connection('legacy_testing')->table('lkt_download')->insert([
+            'id' => 22,
+            'id_cat' => 2,
+            'judul_file' => 'Download 2023',
+            'nama_file' => 'download-2023.pdf',
+            'tanggal' => '2023-12-31 08:00:00',
+            'deskripsi' => 'Dokumen lama',
+            'total_dw' => 1,
+            'trash' => 0,
+            'status' => 1,
+        ]);
+
+        $this
+            ->artisan('legacy:migrate-content', [
+                '--only' => 'announcements,downloads',
+                '--from-year' => '2024',
+            ])
+            ->expectsOutput('Filter tanggal legacy mulai: 2024-01-01')
+            ->expectsOutput('announcements target: 1')
+            ->expectsOutput('downloads target: 1')
+            ->assertSuccessful();
+
+        $this->assertDatabaseCount('announcements', 1);
+        $this->assertDatabaseCount('download_documents', 1);
+        $this->assertDatabaseMissing('announcements', ['legacy_id' => 12]);
+        $this->assertDatabaseMissing('download_documents', ['legacy_id' => 22]);
+    }
+
     public function test_legacy_migration_imports_content_files_and_is_idempotent(): void
     {
         Storage::fake('public');

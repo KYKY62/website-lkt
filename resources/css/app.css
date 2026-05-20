@@ -1272,6 +1272,12 @@ img {
     object-fit: cover;
 }
 
+.news-load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
 .service-card {
     display: grid;
     gap: 0.85rem;

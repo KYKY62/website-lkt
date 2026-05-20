@@ -323,7 +323,7 @@ onBeforeUnmount(() => {
 
                     <div class="home-news-list">
                         <RouterLink
-                            v-for="item in newsItems.slice(1, 7)"
+                            v-for="item in newsItems.slice(1, 9)"
                             :key="item.slug"
                             :to="`/berita/${item.slug}`"
                             class="list-card"

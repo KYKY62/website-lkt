@@ -145,9 +145,9 @@
 
             <div class="widget-form-panel" data-widget-group="html">
                 <div class="field">
-                    <label for="html_content">HTML Terbatas</label>
+                    <label for="html_content">HTML Bebas</label>
                     <textarea id="html_content" name="html_content" rows="8" placeholder="<p>Konten widget...</p>">{{ old('html_content', $widget->html_content) }}</textarea>
-                    <small>Tag yang dipertahankan: p, br, strong, em, ul, ol, li, a, h2-h4, blockquote, span. Script dan event attribute akan dibuang.</small>
+                    <small>HTML disimpan apa adanya, termasuk style, iframe, dan script. Gunakan hanya kode dari sumber yang dipercaya.</small>
                     @error('html_content')
                         <div class="field__error">{{ $message }}</div>
                     @enderror

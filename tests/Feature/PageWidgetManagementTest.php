@@ -101,7 +101,7 @@ class PageWidgetManagementTest extends TestCase
         );
     }
 
-    public function test_html_is_sanitized_and_embed_domain_is_validated(): void
+    public function test_html_widget_keeps_raw_markup_and_embed_domain_is_validated(): void
     {
         $superAdmin = User::factory()->create([
             'role' => User::ROLE_SUPER_ADMIN,
@@ -122,8 +122,8 @@ class PageWidgetManagementTest extends TestCase
 
         $widget = PageWidget::query()->firstOrFail();
 
-        $this->assertStringNotContainsString('<script>', $widget->html_content);
-        $this->assertStringNotContainsString('onclick', $widget->html_content);
+        $this->assertStringContainsString('<script>alert(1)</script>', $widget->html_content);
+        $this->assertStringContainsString('onclick="alert(2)"', $widget->html_content);
         $this->assertStringContainsString('Konten aman', $widget->html_content);
 
         $this

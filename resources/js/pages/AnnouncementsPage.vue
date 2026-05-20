@@ -16,13 +16,13 @@ import { announcementItems } from '../siteData';
                 </div>
             </article>
 
-            <div v-if="announcementItems.length" class="grid gap-5">
-                <article v-for="item in announcementItems" :key="item.slug" class="feature-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
+            <div v-if="announcementItems.length" class="content-list">
+                <article v-for="item in announcementItems" :key="item.slug" class="feature-card content-list-card">
+                    <div class="content-list-card__body">
                         <p class="content-meta">{{ item.category }} | {{ item.date }}</p>
-                        <h2 class="content-title">{{ item.title }}</h2>
+                        <h2 class="content-title content-title--list">{{ item.title }}</h2>
                     </div>
-                    <div class="button-row">
+                    <div class="content-list-card__actions">
                         <RouterLink :to="`/pengumuman/${item.slug}`" class="button button--primary">Detail</RouterLink>
                         <a v-if="item.file_url" :href="item.file_url" class="button button--secondary">Unduh</a>
                     </div>

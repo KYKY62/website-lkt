@@ -15,14 +15,14 @@ import { downloadItems } from '../siteData';
                 </div>
             </article>
 
-            <div v-if="downloadItems.length" class="grid gap-5">
-                <article v-for="item in downloadItems" :key="item.slug" class="feature-card flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
+            <div v-if="downloadItems.length" class="content-list">
+                <article v-for="item in downloadItems" :key="item.slug" class="feature-card content-list-card">
+                    <div class="content-list-card__body">
                         <p class="content-meta">{{ item.category }} | {{ item.date }}</p>
-                        <h2 class="content-title">{{ item.title }}</h2>
+                        <h2 class="content-title content-title--list">{{ item.title }}</h2>
                         <p v-if="item.description" class="content-summary mt-2">{{ item.description }}</p>
                     </div>
-                    <div class="button-row">
+                    <div class="content-list-card__actions">
                         <span class="chip chip-light">{{ item.format }}</span>
                         <a v-if="item.file_url" :href="item.file_url" class="button button--primary">Unduh</a>
                     </div>

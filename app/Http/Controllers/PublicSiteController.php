@@ -33,9 +33,12 @@ class PublicSiteController extends Controller
         $siteData['hero_widgets'] = $this->publicHeroWidgets();
         $siteData['pre_footer_widgets'] = $this->publicPreFooterWidgets();
 
+        $currentPath = $request->path() === '/' ? '/' : '/'.$request->path();
+
         return view('app', [
             'siteData' => $siteData,
-            'currentPath' => $request->path() === '/' ? '/' : '/'.$request->path(),
+            'currentPath' => $currentPath,
+            'meta' => $this->metaForPath($currentPath, $siteData),
         ]);
     }
 
@@ -138,6 +141,120 @@ class PublicSiteController extends Controller
         }
 
         return rtrim(mb_substr($value, 0, max(0, $limit - 3))).'...';
+    }
+
+    private function metaForPath(string $path, array $siteData): array
+    {
+        $identity = $siteData['identity'] ?? [];
+        $siteName = $identity['name'] ?? 'Pemerintah Kabupaten Langkat';
+        $defaultDescription = $siteData['hero']['description']
+            ?? $identity['tagline']
+            ?? 'Portal resmi Pemerintah Kabupaten Langkat.';
+        $meta = [
+            'title' => $siteName,
+            'description' => $this->metaDescription($defaultDescription, $siteName),
+            'url' => url($path),
+            'type' => 'website',
+            'image' => null,
+            'site_name' => $siteName,
+            'published_time' => null,
+        ];
+
+        if (Str::startsWith($path, '/berita/') && Schema::hasTable('news_articles')) {
+            $article = $this->newsQuery()
+                ->where('slug', Str::after($path, '/berita/'))
+                ->first();
+
+            if ($article) {
+                return [
+                    ...$meta,
+                    'title' => "{$article->title} | {$siteName}",
+                    'description' => $this->metaDescription($article->excerpt ?: $article->content, $defaultDescription),
+                    'type' => 'article',
+                    'image' => $this->absolutePublicUrl($article->coverImage()),
+                    'published_time' => $article->published_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        if (Str::startsWith($path, '/pengumuman/') && Schema::hasTable('announcements')) {
+            $announcement = Announcement::query()
+                ->published()
+                ->where('slug', Str::after($path, '/pengumuman/'))
+                ->first();
+
+            if ($announcement) {
+                return [
+                    ...$meta,
+                    'title' => "{$announcement->title} | {$siteName}",
+                    'description' => $this->metaDescription(
+                        $announcement->content ?: $announcement->file_name ?: $announcement->category,
+                        $defaultDescription
+                    ),
+                    'type' => 'article',
+                    'published_time' => $announcement->published_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        if (Schema::hasTable('static_pages')) {
+            $page = StaticPage::query()
+                ->published()
+                ->where('path', $path)
+                ->first();
+
+            if ($page) {
+                return [
+                    ...$meta,
+                    'title' => "{$page->title} | {$siteName}",
+                    'description' => $this->metaDescription($page->excerpt ?: $page->content, $defaultDescription),
+                ];
+            }
+        }
+
+        $pageTitles = [
+            '/profil' => 'Profil',
+            '/berita' => 'Berita',
+            '/pengumuman' => 'Pengumuman',
+            '/layanan' => 'Layanan',
+            '/galeri' => 'Galeri',
+            '/download' => 'Download',
+            '/kontak' => 'Kontak',
+        ];
+
+        if (isset($pageTitles[$path])) {
+            return [
+                ...$meta,
+                'title' => "{$pageTitles[$path]} | {$siteName}",
+            ];
+        }
+
+        return $meta;
+    }
+
+    private function metaDescription(?string $text, string $fallback, int $limit = 160): string
+    {
+        $value = html_entity_decode(strip_tags((string) $text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+
+        if ($value === '') {
+            $value = $fallback;
+        }
+
+        return $this->compactText($value, $limit);
+    }
+
+    private function absolutePublicUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        return url('/'.ltrim($path, '/'));
     }
 
     private function publicAnnouncements(): array

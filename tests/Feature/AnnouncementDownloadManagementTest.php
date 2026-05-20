@@ -93,4 +93,24 @@ class AnnouncementDownloadManagementTest extends TestCase
             ->assertSee('Pengumuman Publik')
             ->assertSee('Dokumen Publik');
     }
+
+    public function test_announcement_detail_has_share_meta_tags(): void
+    {
+        Announcement::query()->create([
+            'title' => 'Pengumuman Meta Sosial',
+            'slug' => 'pengumuman-meta-sosial',
+            'category' => 'Umum',
+            'content' => '<p>Ringkasan pengumuman untuk WhatsApp.</p>',
+            'status' => Announcement::STATUS_PUBLISHED,
+            'published_at' => now(),
+        ]);
+
+        $response = $this->get('/pengumuman/pengumuman-meta-sosial');
+
+        $response
+            ->assertOk()
+            ->assertSee('property="og:title" content="Pengumuman Meta Sosial | Pemerintah Kabupaten Langkat"', false)
+            ->assertSee('property="og:description" content="Ringkasan pengumuman untuk WhatsApp."', false)
+            ->assertSee('name="twitter:card" content="summary_large_image"', false);
+    }
 }

@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import PublicEmptyState from '../components/PublicEmptyState.vue';
+import RawHtmlWidget from '../components/RawHtmlWidget.vue';
 import { announcementItems, departmentNews, downloadItems, heroWidgets, newsItems, serviceApps, siteData } from '../siteData';
 
 const router = useRouter();
@@ -250,7 +251,7 @@ onBeforeUnmount(() => {
                             </a>
                         </template>
 
-                        <div v-else-if="widget.type === 'html'" class="hero-widget__html" v-html="widget.html_content" />
+                        <RawHtmlWidget v-else-if="widget.type === 'html'" class="hero-widget__html" :html="widget.html_content" />
 
                         <div v-else-if="widget.type === 'embed'" class="hero-widget__embed">
                             <iframe

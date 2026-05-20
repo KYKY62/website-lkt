@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { preFooterWidgets } from '../siteData';
+import RawHtmlWidget from './RawHtmlWidget.vue';
 
 const route = useRoute();
 const emptyColumns = { left: [], right: [] };
@@ -71,10 +72,10 @@ function isInternalLink(widget) {
                         </a>
                     </template>
 
-                    <div
+                    <RawHtmlWidget
                         v-else-if="widget.type === 'html'"
                         class="pre-footer-widget__html content-body"
-                        v-html="widget.html_content"
+                        :html="widget.html_content"
                     />
 
                     <div v-else-if="widget.type === 'embed'" class="pre-footer-widget__embed">

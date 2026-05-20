@@ -213,7 +213,7 @@ class AdminPageWidgetController extends Controller
         }
 
         if ($validated['widget_type'] === PageWidget::TYPE_HTML) {
-            $payload['html_content'] = $this->requiredSanitizedHtml($validated['html_content'] ?? null);
+            $payload['html_content'] = $this->requiredHtml($validated['html_content'] ?? null);
         }
 
         if ($validated['widget_type'] === PageWidget::TYPE_EMBED) {
@@ -314,29 +314,17 @@ class AdminPageWidgetController extends Controller
         return $link;
     }
 
-    private function requiredSanitizedHtml(?string $html): string
+    private function requiredHtml(?string $html): string
     {
-        $sanitized = $this->sanitizeHtml($html);
+        $html = trim((string) $html);
 
-        if ($sanitized === '') {
+        if ($html === '') {
             throw ValidationException::withMessages([
                 'html_content' => 'Konten HTML wajib diisi.',
             ]);
         }
 
-        return $sanitized;
-    }
-
-    private function sanitizeHtml(?string $html): string
-    {
-        $html = trim((string) $html);
-        $html = strip_tags($html, '<p><br><strong><b><em><i><u><ul><ol><li><a><h2><h3><h4><blockquote><span>');
-        $html = preg_replace('/\s+on\w+\s*=\s*"[^"]*"/i', '', $html) ?? '';
-        $html = preg_replace("/\s+on\w+\s*=\s*'[^']*'/i", '', $html) ?? '';
-        $html = preg_replace('/\s+on\w+\s*=\s*[^\s>]+/i', '', $html) ?? '';
-        $html = preg_replace('/(href\s*=\s*["\'])\s*javascript:[^"\']*(["\'])/i', '$1#$2', $html) ?? '';
-
-        return trim($html);
+        return $html;
     }
 
     private function requiredEmbedUrl(?string $url): string

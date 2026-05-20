@@ -76,10 +76,10 @@ watch(
                         <p v-if="article.editor_name" class="mt-4 text-sm font-semibold text-slate-500">Dipublikasikan oleh {{ article.editor_name }}</p>
                     </div>
 
-                    <div
-                        class="detail-hero"
-                        :style="article.cover_image_url ? { backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.45), rgba(13, 92, 171, 0.32)), url('${article.cover_image_url}')` } : { backgroundImage: 'linear-gradient(135deg, #0a4b8c, #083767 58%, #e4bf47)' }"
-                    ></div>
+                    <figure v-if="article.cover_image_url" class="detail-media">
+                        <img :src="article.cover_image_url" :alt="article.title">
+                    </figure>
+                    <div v-else class="detail-hero detail-hero--empty"></div>
 
                     <div class="prose-block prose-block--rich" v-html="article.content_html"></div>
                 </div>

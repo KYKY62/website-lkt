@@ -215,6 +215,34 @@ class NewsManagementTest extends TestCase
         $this->assertArrayHasKey('gallery_images', $detail->json());
     }
 
+    public function test_news_detail_has_share_meta_tags(): void
+    {
+        Storage::fake('public');
+
+        $coverImage = UploadedFile::fake()->create('meta-cover.jpg', 120, 'image/jpeg')->store('news-gallery', 'public');
+
+        NewsArticle::query()->create([
+            'title' => 'Berita Meta Sosial',
+            'slug' => 'berita-meta-sosial',
+            'category' => 'Informasi Publik',
+            'excerpt' => 'Ringkasan khusus untuk mesin pencari dan media sosial.',
+            'content' => '<p>Isi berita.</p>',
+            'cover_image_url' => $coverImage,
+            'image_urls' => [$coverImage],
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        $response = $this->get('/berita/berita-meta-sosial');
+
+        $response
+            ->assertOk()
+            ->assertSee('property="og:title" content="Berita Meta Sosial | Pemerintah Kabupaten Langkat"', false)
+            ->assertSee('name="twitter:card" content="summary_large_image"', false)
+            ->assertSee('property="og:image" content="http://localhost/storage/news-gallery/', false)
+            ->assertSee('property="article:published_time"', false);
+    }
+
     public function test_admin_can_reorder_existing_uploaded_images(): void
     {
         Storage::fake('public');

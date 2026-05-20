@@ -89,7 +89,7 @@ class PageWidget extends Model
         return [
             self::TYPE_STATIC_IMAGE => 'Static Image',
             self::TYPE_LINK_BANNER => 'Link Banner',
-            self::TYPE_HTML => 'HTML Terbatas',
+            self::TYPE_HTML => 'HTML Bebas',
             self::TYPE_EMBED => 'Embed',
             self::TYPE_TEXT_CTA => 'Text CTA',
         ];
